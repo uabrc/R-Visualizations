@@ -23,6 +23,9 @@ Launch RStudio through the interactive apps page in the OnDemand (rc.uab.edu) po
 
 Use the following command within RStudio to move the working directory to the downloaded repository
 
+Please note, within R, the environment variable "$USER" is not mapped, so  replace $USER with your actual blazerid
+
 ```
 setwd("/data/user/$USER/r-visualizations")
 ```
+
