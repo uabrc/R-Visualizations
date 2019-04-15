@@ -16,10 +16,10 @@ Copy and paste the following code into the editor window. (Replace all current c
 # JOB HEADERS HERE
 
 git clone https://gitlab.rc.uab.edu/rc-training-sessions/r-visualizations.git /data/user/$USER/r-visualizations
+git clone https://github.com/RainCloudPlots/RainCloudPlots /data/user/$USER/RainCloudPlots
 
-cd /data/user/$USER/r-visualizations
 
-unzip *.zip
+
 ```
 
 # Start RStudio
