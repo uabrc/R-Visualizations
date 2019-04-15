@@ -16,6 +16,10 @@ Copy and paste the following code into the editor window. (Replace all current c
 # JOB HEADERS HERE
 
 git clone https://gitlab.rc.uab.edu/rc-training-sessions/r-visualizations.git /data/user/$USER/r-visualizations
+
+cd /data/user/$USER/r-visualizations
+
+unzip *.zip
 ```
 
 # Start RStudio
