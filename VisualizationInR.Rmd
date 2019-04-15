@@ -1,0 +1,499 @@
+---
+title: "Visualization in R"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+### Establish Directories
+
+Edit this directory to match your user directory on cheaha
+
+```{r}
+setwd("/data/user/mthye/r-visualizations")
+
+```
+
+### Load Required Packages
+
+Before you can load packages for the current R session, you will need to install packages that you haven't used before. Install packages using **install.packages("name_of_package")**. 
+
+One of the best packages for visualization in R is ggplot2 which provides a flexible method for producing data graphics.
+
+```{r message=FALSE, warning=FALSE}
+# install.packages("ggplot2")
+library(ggplot2)
+library(knitr)
+library(datasets)
+library(tidyr)
+library(viridis)
+
+```
+
+### Import Data
+
+Different file formats can be read into R, but the commands for reading files with different extensions varies. 
+
+```{r eval=FALSE, message=FALSE, warning=FALSE}
+
+# Read in SPSS or SAS files
+library(haven)
+read_sav("name_of_file.sav") # SPSS file
+read_sas("name_of_file.sas") # SAS file
+
+# Read in excel workbook files
+library(readxl)
+read_xls("name_of_file.xls")
+read_xlsx("name_of_file.xlsx")
+
+# read in csv files
+read.csv("name_of_file.csv")
+
+# read in text files
+read.delim("name_of_file.txt", sep = "\t") # tab separated file
+
+```
+
+### Base R vs. ggplot2
+
+There are a number of ways to visualize data in R, using base R or other graphics packages. At first, base R may seem like the most efficient method for visualizing your data, but it becomes apparent when generating more complicated figures that base R plotting functions are inflexible and difficult to work with. 
+
+Let's look at the **mtcars** dataset to illustrate this. This dataset is built into ggplot and has the fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models).
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+hist(mtcars$mpg) # base R
+
+ggplot(mtcars, aes(x = mpg)) + geom_histogram(binwidth = 5) # ggplot
+
+```
+
+Now let's create a scatterplot with different colors for automatic and manual cars.
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+# base R
+par(mar = c(4,4,.1,.1))
+plot(mpg~hp,
+     data = subset(mtcars, am==1),
+     xlim=c(50,450),
+     ylim=c(5,40))
+points(mpg~hp, col = "red",
+       data=subset(mtcars, am==0))
+legend(350, 40,
+       c("1", "0"), title="am",
+       col=c("black","red"),
+       pch=c(1,1))
+
+# ggplot
+ggplot(mtcars, aes(hp,mpg, color = factor(am))) +
+  geom_point(size=4)
+
+```
+
+### Getting Started 
+
+Let's look at a dataset that is built into ggplot showing fuel economy of popular car models in 1999 and 2008.
+
+```{r}
+# display first several rows of dataframe
+knitr::kable(head(mpg))
+
+# summary stats for variables in dataframe
+summary(mpg)
+
+```
+
+**Plotting Basics**
+
+*Aesthetic Mapping*
+
+Maybe we want to look at the relationship between **engine size (displ)** and **fuel economy (hwy)**.
+
+We map these variables to the graph using **aesthetics (aes)**.
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(size = 4)
+
+```
+
+*Geoms*
+
+After deciding which variables we want mapped to the graph using **aesthetic mapping**, we decide which *type of graph* we want to create. The **geom** changes the plot type. 
+
+*There are over 25 different geoms to choose from!*
+
+Let's take a look at some geoms that are useful for looking at one variable.
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+# Continuous Data
+# density plot
+ggplot(mpg, aes(hwy)) +
+  geom_density()
+
+# dotplot
+ggplot(mpg, aes(hwy)) +
+  geom_dotplot(binwidth = .5)
+
+# histogram
+ggplot(mpg, aes(hwy)) +
+  geom_histogram(bins=20)
+
+# Discrete Data
+ggplot(mpg, aes(fl)) + #fuel type
+  geom_bar()
+
+```
+
+There are also geoms that are useful for looking at two variables. 
+
+```{r fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+# Continuous Variables
+# scatter plot
+ggplot(mpg, aes(cty, hwy)) + 
+  geom_point(size = 3)
+
+# quantile plot
+ggplot(mpg, aes(cty, hwy)) + 
+  geom_quantile(size = 1)
+
+# smoothed fit plot
+ggplot(mpg, aes(cty, hwy)) + 
+  geom_smooth()
+
+# Continuous + Discrete Variables
+# bar plot
+ggplot(mpg, aes(class, hwy, fill = class)) + 
+  stat_summary(fun.y = mean, geom = "bar") + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .5)
+
+# violin plot
+ggplot(mpg, aes(class, hwy, fill = class)) + 
+  geom_violin(alpha = .8)
+
+# boxplot
+ggplot(mpg, aes(class, hwy, fill = class)) + 
+  geom_boxplot(alpha = .8)
+
+```
+
+More complicated graphs can be generated to visualize three variables. Let's look at the *movies* dataset in the **ggplot2movies** package which has information about different movie genres.
+
+```{r fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
+#install.packages("ggplot2movies")
+library(ggplot2movies)
+
+# gather movie data so all genres are in one column
+movie <- gather(movies, genre, value, "Action":"Short")
+
+# plot
+ggplot(subset(movie, value != 0), aes(year, genre, fill = rating)) +
+  geom_tile(color="black") +
+  theme_bw() +
+  theme(text=element_text(size=15)) +
+  scale_fill_gradient2(midpoint = 5)
+
+```
+
+*Scales*
+
+Use **scales** to change how data are mapped on the graph.
+
+*example*: change the **color** to correspond to the different classes of car. Notice how you can pass an argument to the geom to edit the **size** of the points.
+
+You can also change the **shape** to correspond to the different fuel types.
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+
+ggplot(mpg, aes(displ, hwy, color = class)) +
+  geom_point(size = 4)
+
+ggplot(mpg, aes(displ, hwy, shape = fl)) +
+  geom_point(size = 4)
+
+```
+
+*Layers*
+
+The **layers** are responsible for creating the objects we perceive on the plot. The examples we've reviewed so far have only had one layer. A layer is comprised of 5 parts:
+
+*data*, *aesthetic mappings*, *a statistical transformation*, *a geom*, *position adjustments*
+
+There are defaults that are automatically applied when a new layer is added, so all of these parts aren't explicitly listed each time. **Aesthetic mappings** from the initial call to ggplot are inhereted by the layers that are added unless otherwise specified.
+
+Let's look at how to add layers to a plot.
+
+```{r fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(size=4) +
+  geom_smooth() 
+
+```
+
+We can also see how we would change the graphics across layers.
+
+```{r fig.height=5, fig.width=7, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class), size=4) +
+  geom_smooth()
+
+```
+
+Changing the color palette used for a plot is one fun way to customize your graphs.
+
+```{r fig.height=10, fig.width=10,message=FALSE, warning=FALSE}
+library("RColorBrewer")
+display.brewer.all()
+
+```
+
+*Position Adjustments*
+
+The **jitter geom** is a convenient shortcut for *geom_point(position = "jitter")*. It adds a small amount of random variation to the location of each point and is a useful way of handling overplotting caused by discreteness in smaller datasets. 
+
+```{r fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+
+ggplot(mpg, aes(class, hwy, fill = class)) + 
+  geom_jitter() +
+  geom_boxplot(alpha = .75)
+
+# Another position adjustment on a bar graph
+ggplot(diamonds, aes(color, fill=cut)) +
+  geom_bar(position = "dodge", alpha = .80) # position = "stack" is the default
+
+```
+
+*Themes*
+
+Edit the **theme** to change how the graph appears. You can also create custom themes.
+
+```{r fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+custom.theme <- theme_bw() + 
+  theme(axis.line = element_line(colour = "black"), 
+        panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.border = element_blank(), 
+        panel.background = element_blank(),
+        axis.text = element_text(size = 18),
+        axis.title = element_text(size = 20, color = "blue"),
+        plot.title = element_text(face="bold", color = "red", size=25, hjust = 0.5))
+
+set.seed(999) # fixed random sampling
+dat <- data.frame(replicate(2, sample(0:100, 100, rep = F))) # selection without replacement
+ggplot(dat, aes(X1, X2)) + 
+  geom_point(shape = 21, fill = "blue", size = 2.3, alpha = 0.6) + 
+  custom.theme +
+  ggtitle("Check Out My Cool Custom Theme")
+
+```
+
+
+*Faceting*
+
+Use **facets** to split the data into subsets, but display the same graph for all subsets.
+
+```{r fig.height=6, fig.width=8, message=FALSE, warning=FALSE}
+
+ggplot(mpg, aes(displ, hwy, fill = manufacturer)) +
+  geom_point(shape = 21, size = 3) +
+  facet_wrap(~class) +
+  theme(text=element_text(size=15))
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(~year) +
+  theme_bw(base_size=18)
+
+```
+
+### Applied Example
+
+Let's look at a simple example of how the results of a statistical test can be mapped to the graphs we create. In this example we'll look at data from an experiment on the effect of diet on early growth of chicks. We can run a simple linear model examining the impact of time and diet on weight gain in the sample of chicks. We can then plot the fitted model to the data.
+
+```{r fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+# run the linear model
+mod <- lm(weight ~ Time + Diet, data = ChickWeight)
+
+# plot the data with the model fit
+ggplot(ChickWeight, aes(Time, weight, color = Diet)) +
+  facet_wrap(~Diet, ncol = 4) +
+  stat_summary(fun.y=mean, geom="point", size = 2) +
+  stat_summary(fun.data=mean_se, geom="errorbar", linetype="solid", width=0.6) +
+  stat_summary(aes(y=fitted(mod)), fun.y=mean, geom="line", size = 1) +
+  theme_bw(base_size=14)
+
+```
+
+### Importing Data from OSF
+
+Some researchers make their data publically available on **Open Science Framework (OSF)**. You can down directly download data from OSF and read it into R. Let's look at some behavioral data from a study of 128 patients with post-stroke aphasia who completed a detailed battery of psycholinguistic measures. 
+
+You will need to install the **remotes** package before loading it and use it to install the **osfr** package.
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("remotes")
+library(remotes)
+#remotes::install_github("centerforopenscience/osfr")
+library(osfr)
+
+# download the factor loadings data
+osf_retrieve_file("https://osf.io/pq9n5/") %>%
+  osf_download()
+
+load("FactorLoadings.Rdata")
+
+# summary stats for loadings
+kable(loadings)
+
+# download the correlation data
+osf_retrieve_file("https://osf.io/72naq/") %>%
+  osf_download()
+
+load("CorrelationMatrix.Rdata")
+
+# summary stats for corrs
+summary(corrs)
+
+```
+
+The first file we downloaded is a table of the factor loadings from a principle component analysis on the language measures. The second file we downloaded is a correlation matrix showing the bivariate correlations among all 17 measures administered to patients. Let's plot the data.
+
+```{r fig.height=10, fig.width=16, message=FALSE, warning=FALSE}
+library(gridExtra)
+
+# convert loadings data into long form
+loadings.m <- gather(loadings, Factor, Loading, -Test)
+
+# plot loadings data
+p1 <- ggplot(loadings.m, aes(Test, abs(Loading), fill = Factor)) +
+  geom_bar(stat="identity", color = "white", size = 0.25) + 
+  coord_flip() +
+  ylab("Loading Strength") +
+  theme_bw(base_size=14) +
+  theme(axis.text.y=element_blank(),
+        axis.text.x=element_text(color="black"),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.title=element_blank(),
+        legend.text=element_text(size=10),
+        plot.margin = unit(c(1,.5,58.35,1),"mm"),
+        panel.background=element_rect(color = "black")) +
+  scale_y_continuous(expand=c(0.01,0.01)) +
+  scale_fill_viridis(begin=.30,end=0, discrete=TRUE)
+
+#convert into long form
+corrs.m <- gather(corrs, Test2, Correlation, -Test)
+
+# plot correlation matrix
+p2 <- ggplot(corrs.m, aes(Test2, Test, fill=abs(Correlation))) +
+  geom_tile(color="white") +
+  geom_text(aes(label=round(Correlation,2)), size=5) +
+  geom_text(data=corrs.m[corrs.m$Correlation > .999,], aes(label=round(Correlation,2)), size=5, fontface="bold", color="white") +
+  theme_bw(base_size=14) +
+  theme(axis.title.x=element_blank(),
+        axis.text=element_text(color="black"),
+        axis.text.x=element_text(angle=60, hjust=1),
+        plot.margin = unit(c(1,1,1,1),"mm"),
+        axis.title.y=element_blank()) +
+  scale_x_discrete(name="", limits=rev(levels(corrs.m$Test2))) + #labels=c(1:17)
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  guides(fill = FALSE)
+
+#merge factor loading figure and correlation matrix
+grid.arrange(p2,p1, widths=c(3,1))
+
+```
+
+### Advanced Graphs
+
+#### Rain Cloud Plots
+
+```{r message=FALSE, warning=FALSE}
+# load required packages
+library(cowplot)
+library(dplyr)
+library(readr)
+
+setwd("/data/user/mthye/r-visualizations/RainCloudPlots-master/tutorial_R")
+
+source("R_rainclouds.R")
+source("summarySE.R")
+source("simulateData.R")
+
+# look at the data
+summary_simdat
+
+#Plot with colours and coordinate flip
+ggplot(simdat,aes(x=group,y=score, fill = group)) + 
+  geom_flat_violin(position = position_nudge(x = .2, y = 0),adjust = 2) +
+  geom_point(position = position_jitter(width = .15), size = .25) +
+  ylab('Score') + xlab('Group') + coord_flip() + theme_cowplot() + guides(fill = FALSE) +
+  ggtitle('The Basic Raincloud with Color')
+
+#load the repeated measures factorial data
+rep_data <- read_csv("repeated_measures_data.csv", 
+    col_types = cols(group = col_factor(levels = c("1", "2")), time = col_factor(levels = c("1", "2", "3"))))
+
+sumrepdat <- summarySE(rep_data, measurevar = "score", groupvars=c("group", "time"))
+
+#Rainclouds for repeated measures, additional plotting options 
+ggplot(rep_data, aes(x = time, y = score, fill = group)) +
+  geom_flat_violin(aes(fill = group), 
+                   position = position_nudge(x = .1, y = 0), 
+                   adjust = 1.5, 
+                   trim = FALSE, 
+                   alpha = .5, 
+                   colour = NA) +
+  geom_point(aes(x = as.numeric(time)-.15, y = score, colour = group),
+             position = position_jitter(width = .05), 
+             size = .25, 
+             shape = 20) +
+  geom_boxplot(aes(x = time, y = score, fill = group),
+               outlier.shape = NA, 
+               alpha = .5, 
+               width = .1, 
+               colour = "black") +
+  geom_line(data = sumrepdat, aes(x = as.numeric(time)+.1, 
+                                  y = score_mean, 
+                                  group = group, 
+                                  colour = group), linetype = 3) +
+  geom_point(data = sumrepdat, aes(x = as.numeric(time)+.1, 
+                                   y = score_mean, 
+                                   group = group, 
+                                   colour = group), shape = 18) +
+  geom_errorbar(data = sumrepdat, aes(x = as.numeric(time)+.1, 
+                                      y = score_mean, group = group, 
+                                      colour = group, 
+                                      ymin = score_mean-se, 
+                                      ymax = score_mean+se), width = .05) +
+  scale_colour_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2")
+
+```
+
+#### 3D Surface Plots
+Make a 3D surface plot using the **plotly** package. We will use the *volcano* dataset in R to demonstrate. This dataset has topographic information about the Maunga Whau volcano and is formatted as an 87x61 matrix with rows corresponding to grid lines running east to west and columns corresponding to grid lines running south to north. 
+
+```{r message=FALSE, warning=FALSE}
+library(plotly)
+
+# z is a numeric matrix
+plot_ly(z = ~volcano, type = "surface", contours = list(z = list(show=TRUE,
+                                                                 usecolormap=TRUE, 
+                                                                 highlightcolor="#ff0000",
+                                                                 project=list(z=TRUE)))) %>%
+  layout(scene = list(camera=list(eye = list(x=1.87, y=0.88, z=-0.64))))
+
+```
+
+### Resources:
+
+Much of the information and some code was adapted from:
+**https://reilly-lab.github.io/JamieR_PlotsExamples.html**
+
+ggplot2: Elegant Graphics for Data Analysis (Second Edition) by Hadley Wickham - check out his github page here: **https://github.com/hadley**
+
+
